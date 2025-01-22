@@ -1,7 +1,8 @@
 import requests
-import json
 from dotenv import load_dotenv
 import os
+import argparse
+
 
 # Load the environment variables from the .env file
 load_dotenv()
@@ -38,30 +39,6 @@ HEADERS = {
     "Authorization": f"Bearer {API_TOKEN}",
     "Request-Timeout": "600"  # Set the request timeout to 60 seconds
 }
-
-def update_notifications_to_resolved(notifications_to_update):
-    print("Updating notifications to resolved state one at a time...")
-    for uuid in notifications_to_update:
-        url = f"{API_URL}/namespaces/{ENDOR_NAMESPACE}/notifications"
-        data = {
-            'request': {
-                'update_mask': 'spec.state'
-            },
-            'object': {
-                'uuid': uuid,
-                'spec': {
-                    'state': 'NOTIFICATION_STATE_RESOLVED'
-                }
-            }
-        }
-        response = requests.patch(url, headers=HEADERS, json=data, timeout=60)
-
-        if response.status_code != 200:
-            print(f"Failed to update notification {uuid}, Status Code: {response.status_code}, Response: {response.text}")
-        else:
-            print(f"Notification {uuid} updated to resolved.")
-
-    print("All notifications processed.")
 
 def get_orphaned_packages_uuid():
     print("Fetching orphaned packages...")
@@ -110,7 +87,7 @@ def get_orphaned_packages_uuid():
                 query_data["spec"]["query_spec"]["list_parameters"]["page_token"] = next_page_id
 
             # Make the POST request to the queries endpoint
-            response = requests.post(url, headers=HEADERS, json=query_data, timeout=60)
+            response = requests.post(url, headers=HEADERS, json=query_data, timeout=600)
 
             if response.status_code != 200:
                 print(f"Failed to fetch orphaned packages. Status Code: {response.status_code}, Response: {response.text}")
@@ -126,7 +103,7 @@ def get_orphaned_packages_uuid():
                 project_list = package.get("meta", {}).get("references", {}).get("Project", {}).get("list", {}).get("objects", [])
                 if len(project_list) == 0:
                     orphaned_packages.append(package)
-                    print(f"found package without parent. Package version: {package_uuid}")
+                    print(f"Found package without parent project. Package version: {package_uuid}")
 
             # Check for next page
             next_page_id = response_data.get("spec", {}).get("query_response", {}).get("list", {}).get("response", {}).get("next_page_token")
@@ -154,15 +131,22 @@ def delete_orphaned_packages(orphaned_packages):
                     print(f"Successfully deleted package with UUID: {package_uuid}")
                 else:
                     print(f"Failed to delete package with UUID: {package_uuid}. Status Code: {response.status_code}, Response: {response.text}")
-                exit() #remove this line after tests are done. 
             except requests.RequestException as e:
                 print(f"An error occurred while deleting package with UUID: {package_uuid}: {e}")
 
-def main():    
+
+def main():
+    parser = argparse.ArgumentParser(description="Fetch and delete orphaned packages.")
+    parser.add_argument('--no-dry-run', action='store_true', help="Fetch and delete orphaned packages.")
+    args = parser.parse_args()
+
     orphaned_packages = get_orphaned_packages_uuid()
     print(f"Found {len(orphaned_packages)} orphaned packages.")
-    delete_orphaned_packages(orphaned_packages)
-    
 
-if __name__ == '__main__':
+    if args.no_dry_run:
+        delete_orphaned_packages(orphaned_packages)
+    else:
+        print("Dry run mode: No packages will be deleted. To delete orphaned packages, run the script with the --no-dry-run flag.")
+
+if __name__ == "__main__":
     main()
