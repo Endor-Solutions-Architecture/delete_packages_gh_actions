@@ -1,10 +1,10 @@
-## Delete Test Package Versions
-This script identifies and deletes package versions that are considered "test packages" based on a regular expression match against their `spec.relative_path`. It operates on the Endor Labs namespace (and its child namespaces if `traverse` is enabled in API calls, which it currently is for package fetching) specified in the `.env` file.
+## Delete GitHub Actions Package Versions
+This script identifies and deletes package versions that are GitHub Actions packages based on the ecosystem filter. It operates on the Endor Labs namespace (and its child namespaces if `traverse` is enabled in API calls, which it currently is for package fetching) specified in the `.env` file.
 
-The script uses the following filter to identify test packages:
-`context.type==CONTEXT_TYPE_MAIN and spec.relative_path matches '(?i).*(tests?|testing|test|testdata).*'`
+The script uses the following filter to identify GitHub Actions packages:
+`spec.ecosystem==ECOSYSTEM_GITHUB_ACTION`
 
-This means packages with paths containing `test`, `tests`, `testing`, or `testdata` (case-insensitive) anywhere in their relative path will be targeted.
+This means packages with ecosystem set to `ECOSYSTEM_GITHUB_ACTION` will be targeted for deletion.
 
 ## SETUP
 
@@ -26,13 +26,13 @@ pip install -r requirements.txt
 
 Step 3: Run the script
 
-*   **Dry Run (default behavior):** To see which test packages would be deleted without actually deleting them:
+*   **Dry Run (default behavior):** To see which GitHub Actions packages would be deleted without actually deleting them:
     ```bash
     python3 main.py
     ```
-    The script will list the test packages found and state that it's in dry-run mode.
+    The script will list the GitHub Actions packages found and state that it's in dry-run mode.
 
-*   **Actual Deletion:** To delete all identified test packages:
+*   **Actual Deletion:** To delete all identified GitHub Actions packages:
     ```bash
     python3 main.py --no-dry-run
     ```
