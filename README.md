@@ -1,14 +1,21 @@
-## Delete GitHub Actions Package Versions
-This script identifies and deletes package versions that are GitHub Actions packages based on the ecosystem filter. It operates on the Endor Labs namespace (and its child namespaces if `traverse` is enabled in API calls, which it currently is for package fetching) specified in the `.env` file.
+## Delete GitHub Actions Package Versions and Findings
+This script identifies and deletes package versions and findings that are related to GitHub Actions. It operates on the Endor Labs namespace (and its child namespaces if `traverse` is enabled in API calls, which it currently is for package fetching) specified in the `.env` file.
 
-The script uses the following filter to identify GitHub Actions packages:
+The script uses the following filters to identify GitHub Actions resources:
+
+**For Packages:**
 `spec.ecosystem==ECOSYSTEM_GITHUB_ACTION`
 
-This means packages with ecosystem set to `ECOSYSTEM_GITHUB_ACTION` will be targeted for deletion.
+**For Findings:**
+`spec.finding_categories contains 'FINDING_CATEGORY_GHACTIONS'`
+
+This means:
+- Packages with ecosystem set to `ECOSYSTEM_GITHUB_ACTION` will be targeted for deletion
+- Findings that have `FINDING_CATEGORY_GHACTIONS` in their finding categories will be targeted for deletion
 
 ## SETUP
 
-Step 1: Create a `.env` file in the same directory as the script and add the following, replacing the placeholders with your actual credentials and namespace. Ensure the API key has permissions to read and delete package versions.
+Step 1: Create a `.env` file in the same directory as the script and add the following, replacing the placeholders with your actual credentials and namespace. Ensure the API key has permissions to read and delete package versions and findings.
 
 ```
 API_KEY=<your_api_key_here>
@@ -26,17 +33,31 @@ pip install -r requirements.txt
 
 Step 3: Run the script
 
-*   **Dry Run (default behavior):** To see which GitHub Actions packages would be deleted without actually deleting them:
+The script can process both GitHub Actions packages and findings by default, or you can specify to process only one type:
+
+*   **Dry Run (default behavior):** To see which GitHub Actions packages and findings would be deleted without actually deleting them:
     ```bash
     python3 main.py
     ```
-    The script will list the GitHub Actions packages found and state that it's in dry-run mode.
+    The script will list the GitHub Actions packages and findings found and state that it's in dry-run mode.
 
-*   **Actual Deletion:** To delete all identified GitHub Actions packages:
+*   **Actual Deletion:** To delete all identified GitHub Actions packages and findings:
     ```bash
     python3 main.py --no-dry-run
     ```
-    **Caution:** This will permanently delete package versions. Ensure you have reviewed the output of a dry run first.
+    **Caution:** This will permanently delete package versions and findings. Ensure you have reviewed the output of a dry run first.
+
+*   **Packages Only:** To process only GitHub Actions packages:
+    ```bash
+    python3 main.py --packages-only
+    python3 main.py --packages-only --no-dry-run
+    ```
+
+*   **Findings Only:** To process only GitHub Actions findings:
+    ```bash
+    python3 main.py --findings-only
+    python3 main.py --findings-only --no-dry-run
+    ```
 
 ## No Warranty
 
